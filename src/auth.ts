@@ -24,6 +24,8 @@ export const {
     }),
   ],
   callbacks: {
+    // usually you would not need to do this, but if you want to add custom fields to the session
+    // we are fixing next-auth bug
     async session({ session, user }) {
       if (session && user) {
         session.user.id = user.id;

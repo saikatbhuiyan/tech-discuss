@@ -1,13 +1,15 @@
 "use server";
-import { db } from "@/db";
-import paths from "@/paths";
+
 import type { Topic } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { auth } from "@/auth";
+import { db } from "@/db";
+import paths from "@/paths";
 
 const createTopicSchema = z.object({
-  slug: z
+  name: z
     .string()
     .min(3)
     .regex(/[a-z-]/, {
@@ -18,7 +20,7 @@ const createTopicSchema = z.object({
 
 interface CreateTopicFormState {
   errors: {
-    slug?: string[];
+    name?: string[];
     description?: string[];
     _form?: string[];
   };
@@ -29,7 +31,7 @@ export async function createTopic(
   formData: FormData
 ): Promise<CreateTopicFormState> {
   const result = createTopicSchema.safeParse({
-    slug: formData.get("slug"),
+    name: formData.get("name"),
     description: formData.get("description"),
   });
 
@@ -39,25 +41,37 @@ export async function createTopic(
     };
   }
 
-  let topic: Topic;
+  const session = await auth();
+  if (!session || !session.user) {
+    return {
+      errors: {
+        _form: ["You must be signed in to do this."],
+      },
+    };
+  }
 
+  let topic: Topic;
   try {
     topic = await db.topic.create({
       data: {
-        slug: result.data.slug,
+        slug: result.data.name,
         description: result.data.description,
       },
     });
-  } catch (error) {
-    if (error instanceof Error) {
+  } catch (err: unknown) {
+    if (err instanceof Error) {
       return {
         errors: {
-          _form: [error.message],
+          _form: [err.message],
+        },
+      };
+    } else {
+      return {
+        errors: {
+          _form: ["Something went wrong"],
         },
       };
     }
-    console.error("Error creating topic:", error);
-    return { errors: { _form: ["Failed to create topic. Please try again."] } };
   }
 
   revalidatePath("/");

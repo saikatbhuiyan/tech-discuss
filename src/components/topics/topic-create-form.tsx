@@ -1,19 +1,21 @@
 "use client";
 
-import { startTransition, useActionState } from "react";
-import * as actions from "@/actions";
+import { useActionState, startTransition } from "react";
+
 import {
-  Button,
-  Form,
   Input,
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
+  Button,
   Textarea,
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+  Form,
 } from "@nextui-org/react";
+import * as actions from "@/actions";
+import FormButton from "@/components/common/form-button";
 
 export default function TopicCreateForm() {
-  const [formState, action] = useActionState(actions.createTopic, {
+  const [formState, action, isPending] = useActionState(actions.createTopic, {
     errors: {},
   });
 
@@ -35,12 +37,12 @@ export default function TopicCreateForm() {
           <div className="flex flex-col gap-4 p-4 w-80">
             <h3 className="text-lg">Create a Topic</h3>
             <Input
-              name="slug"
-              label="Slug"
+              name="name"
+              label="Name"
               labelPlacement="outside"
-              placeholder="Slug must be lowercase letters or dashes"
-              isInvalid={!!formState.errors.slug}
-              errorMessage={formState.errors.slug?.join(", ")}
+              placeholder="Name"
+              isInvalid={!!formState.errors.name}
+              errorMessage={formState.errors.name?.join(", ")}
             />
             <Textarea
               name="description"
@@ -57,7 +59,7 @@ export default function TopicCreateForm() {
               </div>
             ) : null}
 
-            <Button type="submit">Submit</Button>
+            <FormButton isLoading={isPending}>Save</FormButton>
           </div>
         </Form>
       </PopoverContent>
